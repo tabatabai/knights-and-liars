@@ -19,5 +19,5 @@ We give a short overview of the files' contents.
 * ` plotting.py` 
     - The function `todo` generates nice-looking eps vector graphics of 2D grid configurations,
     in the style used in the paper.
-    - The function `textplot` generaties text representations of the grids, in the style of the OEIS-entry A289362.
+    - The function `textplot` generates text representations of the grids, in the style of the OEIS-entry A289362.
     - The function `draw_with_labels` is for plotting networkX-graphs with red and blue labels using matplotlib.
