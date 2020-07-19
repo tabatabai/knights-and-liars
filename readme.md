@@ -16,11 +16,6 @@ The possible values of the parameter `formulation` for `kl_gurobi` are:
  - "indicator", which is an implementation of "standard", but uses Gurobi's ability to directly model indicator constraints to directly model the implications (5)-(7) from the paper.
  The possible values of the parameter `formulation` for `kl_mip` are "standard" and "alternative".
 
-* ` utility.py` 
-    - The function `grid_bound` computes the bound from Proposition 2 of the paper.
-    - The function `trivially_blue_vertices` finds the trivially blue vertices of a given networkX-graph.
-* ` plotting.py` 
-    - The function `tikzplot` generates nice-looking eps vector graphics of 2D grid configurations,
-    in the style used in the paper.
-    - The function `textplot` generaties text representations of the grids, in the style of the OEIS-entry A289362.
-    - The function `draw_with_labels` is for plotting networkX-graphs with red and blue labels using matplotlib.
+In `utility.py`, the function `grid_bound` computes the bound from Proposition 2 of the paper and the function `trivially_blue_vertices` finds the trivially blue vertices of a given networkX-graph.
+
+In `plotting.py`, he function `tikzplot` generates eps vector graphics of 2D grid configurations, in the style used in the paper. The function `textplot` generaties text representations of the grids, in the style of the OEIS-entry A289362. The function `draw_with_labels` is for plotting networkX-graphs with red and blue labels using matplotlib.
