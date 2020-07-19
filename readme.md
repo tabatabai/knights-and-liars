@@ -11,9 +11,9 @@ In `knights_and_liars.py`, we implement the functions `kl_gurobi`, using the off
 the open source framefork python-mip.
 By specifying the parameter `formulation` for `kl_gurobi`, it is possible to choose between different integer programming formulations for computing Knights and Liars numbers.
 The possible values of the parameter `formulation` for `kl_gurobi` are:
- - "standard", which is the formulation given in the paper.
- - "alternative", which is an alternative formulation, using fewer variables and constraints. We found this formulation to perform worse for two-dimensional grid graphs, but found performance gains for some other graphs.
- - "indicator", which is an implementation of "standard", but uses Gurobi's ability to directly model indicator constraints to directly model the implications (5)-(7) from the paper.
+ - `"standard"`, which is the formulation given in the paper.
+ - `"alternative"`, which is an alternative formulation, using fewer variables and constraints. We found this formulation to perform worse for two-dimensional grid graphs, but found performance gains for some other graphs.
+ - `"indicator"`, which is an implementation of "standard", but uses Gurobi's ability to directly model indicator constraints to directly model the implications (5)-(7) from the paper.
  The possible values of the parameter `formulation` for `kl_mip` are "standard" and "alternative".
 
 In `utility.py`, the function `grid_bound` computes the bound from Proposition 2 of the paper and the function `trivially_blue_vertices` finds the trivially blue vertices of a given networkX-graph.
