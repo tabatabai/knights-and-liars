@@ -1,4 +1,4 @@
-# Knights and Liars on graphs
+# Knights and Liars on Graphs
 
 In this repository, we provide supplementary programs for the paper
 _Knights and Liars on graphs_, which is co-authored by Dieter P. Gruber.
