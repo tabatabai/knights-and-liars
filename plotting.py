@@ -42,7 +42,7 @@ def textplot(red_vertices, m, n):
 
 def grid_to_eps(red_vertices, m, n, name):
     factor = 0.3
-    tikz_latex = """\\documentclass[crop,tikz,12pt]{standalone}
+    tikz_latex = """\\documentclass[crop,tikz]{standalone}
 \\begin{document}
 \\begin{tikzpicture}"""
     for i, j in it.product(range(n), range(m)):
@@ -66,7 +66,7 @@ def grid_to_eps(red_vertices, m, n, name):
 
 def grids_to_eps(list_of_list_of_red_vertices, m, ns, name):
     factor = 0.3
-    tikz_latex = """\\documentclass[crop,tikz,12pt]{standalone}
+    tikz_latex = """\\documentclass[crop,tikz]{standalone}
 \\begin{document}
 \\begin{tikzpicture}"""
     for num, red_vertices in enumerate(list_of_list_of_red_vertices):
@@ -95,7 +95,7 @@ def grids_to_eps(list_of_list_of_red_vertices, m, ns, name):
 def triangle_to_eps(red_vertices, n, name):
     n = n + 1
     factor = 0.3
-    tikz_latex = """\\documentclass[crop,tikz,12pt]{standalone}
+    tikz_latex = """\\documentclass[crop,tikz]{standalone}
 \\begin{document}
 \\begin{tikzpicture}"""
     offset = 0
