@@ -137,23 +137,23 @@ if __name__ == "__main__":
 
     Tor_12_27 = nx.grid_2d_graph(m=12, n=27, periodic=True)
     _, red_vertices, _ = kl_gurobi(Tor_12_27, OutputFlag=False, Threads=4)
-    grid_to_eps(red_vertices, n, n, f"torus_12_27")
+    grid_to_eps(red_vertices, 12, 27, name="torus_12_27")
 
     Path_16 = nx.grid_2d_graph(m=1, n=16, periodic=False)
     _, red_vertices, _ = kl_gurobi(Path_16, OutputFlag=False, Threads=4)
-    grid_to_eps(red_vertices, n, n, f"grid_1_16")
+    grid_to_eps(red_vertices, 1, 16, "grid_1_16")
 
     Grid_4_15 = nx.grid_2d_graph(m=4, n=15, periodic=False)
     _, red_vertices, _ = kl_gurobi(Grid_4_15, OutputFlag=False, Threads=4)
-    grid_to_eps(red_vertices, n, n, f"grid_4_15")
+    grid_to_eps(red_vertices, 4, 16, "grid_4_15")
 
     Grid_7_32 = nx.grid_2d_graph(m=7, n=32, periodic=False)
     _, red_vertices, _ = kl_gurobi(Grid_7_32, OutputFlag=False, Threads=4)
-    grid_to_eps(red_vertices, n, n, f"grid_7_32")
+    grid_to_eps(red_vertices, 7, 32, "grid_7_32")
 
     Grid_8_32 = nx.grid_2d_graph(m=8, n=32, periodic=False)
     _, red_vertices, _ = kl_gurobi(Grid_8_32, OutputFlag=False, Threads=4)
-    grid_to_eps(red_vertices, n, n, f"grid_8_32")
+    grid_to_eps(red_vertices, 8, 32, "grid_8_32")
 
     tri_16_1 = [
         (0, 0),
@@ -259,6 +259,7 @@ if __name__ == "__main__":
         (16, 14),
         (16, 15),
     ]
+
     tri_16_2 = [
         (0, 0),
         (1, 0),
