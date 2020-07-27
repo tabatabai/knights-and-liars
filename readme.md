@@ -1,5 +1,8 @@
 # Knights and Liars on Graphs
 
+
+![Rectangular Grid](https://github.com/tabatabai/knights-and-liars/raw/master/ex.png)
+
 In this repository, we provide supplementary programs for the paper
 _Knights and Liars on Graphs_, which is co-authored by Dieter P. Gruber.
 The paper has been submitted to the Journal of Integer sequences and is currently pending review. The submitted version will soon be available on arXiv.org.
