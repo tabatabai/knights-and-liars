@@ -1,13 +1,11 @@
 # Knights and Liars on Graphs
 
+Supplementary programs for the paper _Knights and Liars on Graphs_, by Paul Tabatabai and Dieter P. Gruber.
 
 <p align="center">
   <img src="https://github.com/tabatabai/knights-and-liars/raw/master/ex.png" />
 </p>
 
-
-In this repository, we provide supplementary programs for the paper
-_Knights and Liars on Graphs_, which is co-authored by Dieter P. Gruber.
 The paper has been submitted to the Journal of Integer sequences and is currently pending review. The submitted version will soon be available on arXiv.org.
 
 The paper deals with a combinatorial maximization problem, which is described in the sequence [A289362](https://oeis.org/A289362) of the Online Encyclopedia of Integer Sequences.
