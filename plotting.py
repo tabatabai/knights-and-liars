@@ -1,5 +1,6 @@
 import networkx as nx
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 import time
 from pathlib import Path
 import itertools as it
@@ -41,37 +42,33 @@ def textplot(red_vertices, m, n):
 
 def grid_to_eps(red_vertices, m, n, name):
     factor = 0.3
-    tikz_latex = f"""\\documentclass[a4paper,12pt]{{article}}
-\\usepackage{{tikz}}
-\\pgfrealjobname{{{name}_ext}}
-\\begin{{document}}
-\\beginpgfgraphicnamed{{{name}}}
-\\begin{{tikzpicture}}"""
+    tikz_latex = """\\documentclass[crop,tikz,12pt]{standalone}
+\\begin{document}
+\\begin{tikzpicture}"""
     for i, j in it.product(range(n), range(m)):
         if (j, i) in red_vertices:
             tikz_latex += f"\\fill[red] ({i}*{factor}, {m-j}*{factor}) circle (0.1cm);\n"
         else:
             tikz_latex += f"\\fill[blue] ({i}*{factor}, {m-j}*{factor}) circle (0.037cm);\n"
-
     tikz_latex += """\\end{tikzpicture}
-\\endpgfgraphicnamed
 \\end{document}"""
+
+    Path("tmp").mkdir(exist_ok=True)
     with open(f"tmp/{name}.tex", "w", encoding="utf-8") as f:
         print(tikz_latex, file=f)
-    Popen(["latex", "-output-directory", "tmp", f"tmp/{name}.tex"])
-    time.sleep(10)
-    Popen(["dvips", "-o", f"tmp/{name}.eps", f"tmp/{name}.dvi"])
-    time.sleep(2)
+
+    for _ in range(2):
+        p = Popen(["pdflatex", "-output-directory=tmp", f"tmp/{name}.tex"])
+        p.wait()
+    p = Popen(["pdftops", "-eps", f"tmp/{name}.pdf", f"tmp/{name}.eps"])
+    p.wait()
 
 
 def grids_to_eps(list_of_list_of_red_vertices, m, ns, name):
     factor = 0.3
-    tikz_latex = f"""\\documentclass[a4paper,12pt]{{article}}
-\\usepackage{{tikz}}
-\\pgfrealjobname{{{name}_ext}}
-\\begin{{document}}
-\\beginpgfgraphicnamed{{{name}}}
-\\begin{{tikzpicture}}"""
+    tikz_latex = """\\documentclass[crop,tikz,12pt]{standalone}
+\\begin{document}
+\\begin{tikzpicture}"""
     for num, red_vertices in enumerate(list_of_list_of_red_vertices):
         n = ns[num]
         print(n, sum(ns[:num]))
@@ -82,25 +79,25 @@ def grids_to_eps(list_of_list_of_red_vertices, m, ns, name):
                 tikz_latex += f"\\fill[blue] ({(i+sum(ns[:num])+ 2*num)*factor}, {(m-j)*factor}) circle (0.037cm);\n"
 
     tikz_latex += """\\end{tikzpicture}
-\\endpgfgraphicnamed
 \\end{document}"""
+
+    Path("tmp").mkdir(exist_ok=True)
     with open(f"tmp/{name}.tex", "w", encoding="utf-8") as f:
         print(tikz_latex, file=f)
-    Popen(["latex", "-output-directory", "tmp", f"tmp/{name}.tex"])
-    time.sleep(10)
-    Popen(["dvips", "-o", f"tmp/{name}.eps", f"tmp/{name}.dvi"])
-    time.sleep(2)
+
+    for _ in range(2):
+        p = Popen(["pdflatex", "-output-directory=tmp", f"tmp/{name}.tex"])
+        p.wait()
+    p = Popen(["pdftops", "-eps", f"tmp/{name}.pdf", f"tmp/{name}.eps"])
+    p.wait()
 
 
 def triangle_to_eps(red_vertices, n, name):
     n = n + 1
     factor = 0.3
-    tikz_latex = f"""\\documentclass[a4paper,12pt]{{article}}
-\\usepackage{{tikz}}
-\\pgfrealjobname{{{name}_ext}}
-\\begin{{document}}
-\\beginpgfgraphicnamed{{{name}}}
-\\begin{{tikzpicture}}"""
+    tikz_latex = """\\documentclass[crop,tikz,12pt]{standalone}
+\\begin{document}
+\\begin{tikzpicture}"""
     offset = 0
     node_id = 0
     for i in range(n):
@@ -117,14 +114,17 @@ def triangle_to_eps(red_vertices, n, name):
                 )
             node_id += 1
     tikz_latex += """\\end{tikzpicture}
-\\endpgfgraphicnamed
 \\end{document}"""
-    with open(f"tmp/{name}_ext.tex", "w", encoding="utf-8") as f:
+
+    Path("tmp").mkdir(exist_ok=True)
+    with open(f"tmp/{name}.tex", "w", encoding="utf-8") as f:
         print(tikz_latex, file=f)
-    Popen(["latex", f"--jobname={name}", "-output-directory", "tmp", f"tmp/{name}_ext.tex"])
-    time.sleep(10)
-    Popen(["dvips", "-o", f"tmp/{name}.eps", f"tmp/{name}.dvi"])
-    time.sleep(2)
+
+    for _ in range(2):
+        p = Popen(["pdflatex", "-output-directory=tmp", f"tmp/{name}.tex"])
+        p.wait()
+    p = Popen(["pdftops", "-eps", f"tmp/{name}.pdf", f"tmp/{name}.eps"])
+    p.wait()
 
 
 if __name__ == "__main__":
@@ -132,27 +132,27 @@ if __name__ == "__main__":
 
     for n in range(4, 15 + 1):
         G = nx.grid_2d_graph(m=n, n=n, periodic=False)
-        _, red_vertices, _ = kl_gurobi(G, OutputFlag=False, Threads=4)
+        _, red_vertices, _ = kl_gurobi(G, OutputFlag=False, Threads=1)
         grid_to_eps(red_vertices, n, n, f"grid_{n}")
 
     Tor_12_27 = nx.grid_2d_graph(m=12, n=27, periodic=True)
-    _, red_vertices, _ = kl_gurobi(Tor_12_27, OutputFlag=False, Threads=4)
+    _, red_vertices, _ = kl_gurobi(Tor_12_27, OutputFlag=False, Threads=1)
     grid_to_eps(red_vertices, 12, 27, name="torus_12_27")
 
     Path_16 = nx.grid_2d_graph(m=1, n=16, periodic=False)
-    _, red_vertices, _ = kl_gurobi(Path_16, OutputFlag=False, Threads=4)
+    _, red_vertices, _ = kl_gurobi(Path_16, OutputFlag=False, Threads=1)
     grid_to_eps(red_vertices, 1, 16, "grid_1_16")
 
     Grid_4_15 = nx.grid_2d_graph(m=4, n=15, periodic=False)
-    _, red_vertices, _ = kl_gurobi(Grid_4_15, OutputFlag=False, Threads=4)
+    _, red_vertices, _ = kl_gurobi(Grid_4_15, OutputFlag=False, Threads=1)
     grid_to_eps(red_vertices, 4, 16, "grid_4_15")
 
     Grid_7_32 = nx.grid_2d_graph(m=7, n=32, periodic=False)
-    _, red_vertices, _ = kl_gurobi(Grid_7_32, OutputFlag=False, Threads=4)
+    _, red_vertices, _ = kl_gurobi(Grid_7_32, OutputFlag=False, Threads=1)
     grid_to_eps(red_vertices, 7, 32, "grid_7_32")
 
     Grid_8_32 = nx.grid_2d_graph(m=8, n=32, periodic=False)
-    _, red_vertices, _ = kl_gurobi(Grid_8_32, OutputFlag=False, Threads=4)
+    _, red_vertices, _ = kl_gurobi(Grid_8_32, OutputFlag=False, Threads=1)
     grid_to_eps(red_vertices, 8, 32, "grid_8_32")
 
     tri_16_1 = [
