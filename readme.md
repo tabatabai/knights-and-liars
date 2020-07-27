@@ -11,7 +11,7 @@ The paper has been submitted to the Journal of Integer sequences and is currentl
 The paper deals with a combinatorial maximization problem, which is described in the sequence [A289362](https://oeis.org/A289362) of the Online Encyclopedia of Integer Sequences.
 We studied the generalization of this problem to arbitrary (simple and undirected) graphs.
 
-*Definition*
+*Definition*:
 The Knights and Liars number `kl(G)` of a graph `G` is the maximum possible number of red vertices in a red-blue-coloring of the vertices of `G`, such that for each red vertex, exactly half of its neighbors are red, and for each blue vertex, _not_ exactly half of its neighbors are red.
 
 We give a short overview of the files' contents.
