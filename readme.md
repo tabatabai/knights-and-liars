@@ -26,4 +26,4 @@ The possible values of the parameter `formulation` for `kl_mip` are `"standard"`
 
 In `utility.py`, the function `grid_bound` computes the bound from Proposition 2 of the paper and the function `trivially_blue_vertices` finds the trivially blue vertices of a given networkX-graph, as described in Section 2 of the paper.
 
-In `plotting.py`, the function `grid_to_eps` is for generating eps vector graphics of 2D grid configurations, in the style used in the paper. The function `textplot` generates text representations of 2D grids, in the style of the OEIS-entry A289362. The function `draw_graph_with_labels` is used for plotting networkX-graphs with red and blue labels using matplotlib.
+In `plotting.py`, the functions `grid_to_eps`,  `grids_to_eps`, and  `triangle_to_eps` are for generating eps vector graphics, in the style used in the paper. The function `textplot` generates text representations of 2D grids, in the style of the OEIS-entry A289362. The function `draw_graph_with_labels` is used for plotting networkX-graphs with red and blue labels using matplotlib.
