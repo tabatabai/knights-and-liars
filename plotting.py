@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     Grid_4_15 = nx.grid_2d_graph(m=4, n=15, periodic=False)
     _, red_vertices, _ = kl_gurobi(Grid_4_15, OutputFlag=False, Threads=1)
-    grid_to_eps(red_vertices, 4, 16, "grid_4_15")
+    grid_to_eps(red_vertices, 4, 15, "grid_4_15")
 
     Grid_7_32 = nx.grid_2d_graph(m=7, n=32, periodic=False)
     _, red_vertices, _ = kl_gurobi(Grid_7_32, OutputFlag=False, Threads=1)
