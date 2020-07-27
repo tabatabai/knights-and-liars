@@ -15,8 +15,7 @@ We studied the generalization of this problem to arbitrary (simple and undirecte
 The Knights and Liars number `kl(G)` of a graph `G` is the maximum possible number of red vertices in a red-blue-coloring of the vertices of `G`, such that for each red vertex, exactly half of its neighbors are red, and for each blue vertex, _not_ exactly half of its neighbors are red.
 
 We give a short overview of the files' contents.
-In `knights_and_liars.py`, we implement the functions `kl_gurobi`, using the offical Gurobi-API gurobipy, and `kl_mip`, using
-the open source framefork python-mip.
+In `knights_and_liars.py`, we implement the functions `kl_gurobi`, using the offical Gurobi-API [`gurobipy`](https://www.gurobi.com/documentation/9.0/quickstart_linux/py_python_interface.html), and `kl_mip`, using the open source framework [`python-mip`](https://www.python-mip.com/).
 By specifying the value of the parameter `formulation` for `kl_gurobi`, it is possible to choose between different integer programming formulations for computing Knights and Liars numbers.
 The possible values of the parameter `formulation` for `kl_gurobi` are:
  - `"standard"`, which is the formulation given in the paper.
