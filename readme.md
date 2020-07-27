@@ -1,7 +1,10 @@
 # Knights and Liars on Graphs
 
 
-![Rectangular Grid](https://github.com/tabatabai/knights-and-liars/raw/master/ex.png)
+<p align="center">
+  <img src="https://github.com/tabatabai/knights-and-liars/raw/master/ex.png" />
+</p>
+
 
 In this repository, we provide supplementary programs for the paper
 _Knights and Liars on Graphs_, which is co-authored by Dieter P. Gruber.
