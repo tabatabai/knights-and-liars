@@ -25,79 +25,77 @@ def kl_gurobi(
     m = gp.Model()
 
     if formulation not in ["standard", "alternative", "indicator"]:
-        raise ValueError(
-            'The options for formulation are "standard", "alternative" or "indicator"'
-        )
+        raise ValueError('The options for formulation are "standard", "alternative" or "indicator"')
     if formulation == "standard":
-        label = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
+        red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
         high = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
         low = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
 
-        m.setObjective(sum(label.values()), gp.GRB.MAXIMIZE)
+        m.setObjective(sum(red.values()), gp.GRB.MAXIMIZE)
 
         for x in G.nodes():
             deg = G.degree[x]
             if deg % 2 == 1:
-                m.addConstr(label[x] == 0)
+                m.addConstr(red[x] == 0)
             else:
                 neighbors = list(G.neighbors(x))
-                m.addConstr(high[x] + low[x] >= 1 - label[x])
-                m.addConstr(high[x] + low[x] <= 1 + label[x])
-                m.addConstr(sum([label[y] for y in neighbors]) <= deg - (deg / 2) * label[x])
-                m.addConstr(sum([label[y] for y in neighbors]) >= (deg / 2) * label[x])
-                m.addConstr(sum([label[y] for y in neighbors]) <= deg - (deg / 2 + 1) * low[x])
-                m.addConstr(sum([label[y] for y in neighbors]) >= (deg / 2 + 1) * high[x])
+                m.addConstr(high[x] + low[x] >= 1 - red[x])
+                m.addConstr(high[x] + low[x] <= 1 + red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg / 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg / 2 + 1) * low[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg / 2 + 1) * high[x])
 
     elif formulation == "alternative":
-        label = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
+        red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
         aux = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
 
-        m.setObjective(sum(label.values()), gp.GRB.MAXIMIZE)
+        m.setObjective(sum(red.values()), gp.GRB.MAXIMIZE)
 
         for x in G.nodes():
             deg = G.degree[x]
             if deg % 2 == 1:
-                m.addConstr(label[x] == 0)
+                m.addConstr(red[x] == 0)
             else:
                 neighbors = list(G.neighbors(x))
-                m.addConstr(sum([label[y] for y in neighbors]) <= deg - (deg / 2) * label[x])
-                m.addConstr(sum([label[y] for y in neighbors]) >= (deg / 2) * label[x])
-                # if label[x] == 0 and aux[x] == 0, the strict minority of x's neighbors is red
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg / 2) * red[x])
+                # if red[x] == 0 and aux[x] == 0, the strict minority of x's neighbors is red
                 m.addConstr(
-                    sum([label[y] for y in neighbors])
-                    <= (deg / 2 - 1) + aux[x] * (deg / 2 + 1) + label[x] * (deg / 2 + 1)
+                    sum([red[y] for y in neighbors])
+                    <= (deg / 2 - 1) + aux[x] * (deg / 2 + 1) + red[x] * (deg / 2 + 1)
                 )
-                # if label[x] == 0 and aux[x] == 1, the strict majority of x's neighbors is red
+                # if red[x] == 0 and aux[x] == 1, the strict majority of x's neighbors is red
                 m.addConstr(
-                    sum([label[y] for y in neighbors])
-                    >= (deg / 2 + 1) * aux[x] - (deg / 2 + 1) * label[x]
+                    sum([red[y] for y in neighbors])
+                    >= (deg / 2 + 1) * aux[x] - (deg / 2 + 1) * red[x]
                 )
 
     elif formulation == "indicator":
-        label = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
+        red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
         high = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
         low = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
 
-        m.setObjective(sum(label.values()), gp.GRB.MAXIMIZE)
+        m.setObjective(sum(red.values()), gp.GRB.MAXIMIZE)
 
         for x in G.nodes():
             deg = G.degree[x]
             if deg % 2 == 1:
-                m.addConstr(label[x] == 0)
+                m.addConstr(red[x] == 0)
             else:
                 neighbors = list(G.neighbors(x))
-                m.addConstr((label[x] == 0) >> (high[x] + low[x] == 1))
-                m.addConstr((label[x] == 1) >> (sum([label[y] for y in neighbors]) == (deg / 2)))
-                m.addConstr((high[x] == 1) >> (sum([label[y] for y in neighbors]) <= deg / 2 - 1))
-                m.addConstr((low[x] == 1) >> (sum([label[y] for y in neighbors]) >= deg / 2 + 1))
+                m.addConstr((red[x] == 0) >> (high[x] + low[x] == 1))
+                m.addConstr((red[x] == 1) >> (sum([red[y] for y in neighbors]) == (deg / 2)))
+                m.addConstr((high[x] == 1) >> (sum([red[y] for y in neighbors]) <= deg / 2 - 1))
+                m.addConstr((low[x] == 1) >> (sum([red[y] for y in neighbors]) >= deg / 2 + 1))
 
     if red_vertices is not None:
         for vertex in red_vertices:
-            m.addConstr(label[vertex] == 1)
+            m.addConstr(red[vertex] == 1)
 
     if blue_vertices is not None:
         for vertex in blue_vertices:
-            m.addConstr(label[vertex] == 0)
+            m.addConstr(red[vertex] == 0)
 
     if OutputFlag is not None:
         m.Params.OutputFlag = OutputFlag
@@ -116,10 +114,10 @@ def kl_gurobi(
     m.optimize()
 
     if m.status == gp.GRB.OPTIMAL:
-        return int(m.getAttr("ObjVal")), [v for v in label if label[v].X >= 0.95], "optimal"
+        return int(m.getAttr("ObjVal")), [v for v in red if red[v].X >= 0.95], "optimal"
     elif m.status == gp.GRB.TIME_LIMIT:
         try:
-            return int(m.getAttr("ObjVal")), [v for v in label if label[v].X >= 0.95], "timelimit"
+            return int(m.getAttr("ObjVal")), [v for v in red if red[v].X >= 0.95], "timelimit"
         except Exception as e:
             print("Timelimit hit, no feasible solution was found.")
             print(e)
@@ -148,56 +146,56 @@ def kl_mip(
             print(f.read())
 
     if formulation == "standard":
-        label = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
+        red = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
         high = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
         low = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
 
-        m.objective = mip.xsum(label.values())
+        m.objective = mip.xsum(red.values())
 
         for x in G.nodes():
             deg = G.degree[x]
             if deg % 2 == 1:
-                m += label[x] == 0
+                m += red[x] == 0
             else:
                 neighbors = list(G.neighbors(x))
-                m += high[x] + low[x] >= 1 - label[x]
-                m += high[x] + low[x] <= 1 + label[x]
-                m += mip.xsum([label[y] for y in neighbors]) <= deg - (deg / 2) * label[x]
-                m += mip.xsum([label[y] for y in neighbors]) >= (deg / 2) * label[x]
-                m += mip.xsum([label[y] for y in neighbors]) <= deg - (deg / 2 + 1) * low[x]
-                m += mip.xsum([label[y] for y in neighbors]) >= (deg / 2 + 1) * high[x]
+                m += high[x] + low[x] >= 1 - red[x]
+                m += high[x] + low[x] <= 1 + red[x]
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg / 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg / 2 + 1) * low[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg / 2 + 1) * high[x]
 
     elif formulation == "alternative":
-        label = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
+        red = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
         aux = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
 
-        m.objective = mip.xsum(label.values())
+        m.objective = mip.xsum(red.values())
 
         for x in G.nodes():
             deg = G.degree[x]
             if deg % 2 == 1:
-                m += label[x] == 0
+                m += red[x] == 0
             else:
                 neighbors = list(G.neighbors(x))
-                m += mip.xsum([label[y] for y in neighbors]) <= deg - (deg / 2) * label[x]
-                m += mip.xsum([label[y] for y in neighbors]) >= (deg / 2) * label[x]
-                # if label[x] == 0 and aux[x] == 0, the strict minority of x's neighbors is red
-                m += mip.xsum([label[y] for y in neighbors]) <= (deg / 2 - 1) + aux[x] * (
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg / 2) * red[x]
+                # if red[x] == 0 and aux[x] == 0, the strict minority of x's neighbors is red
+                m += mip.xsum([red[y] for y in neighbors]) <= (deg / 2 - 1) + aux[x] * (
                     deg / 2 + 1
-                ) + label[x] * (deg / 2 + 1)
-                # if label[x] == 0 and aux[x] == 1, the strict majority of x's neighbors is red
+                ) + red[x] * (deg / 2 + 1)
+                # if red[x] == 0 and aux[x] == 1, the strict majority of x's neighbors is red
                 m += (
-                    mip.xsum([label[y] for y in neighbors])
-                    >= (deg / 2 + 1) * aux[x] - (deg / 2 + 1) * label[x]
+                    mip.xsum([red[y] for y in neighbors])
+                    >= (deg / 2 + 1) * aux[x] - (deg / 2 + 1) * red[x]
                 )
 
     if red_vertices is not None:
         for vertex in red_vertices:
-            m += label[vertex] == 1
+            m += red[vertex] == 1
 
     if blue_vertices is not None:
         for vertex in blue_vertices:
-            m += label[vertex] == 0
+            m += red[vertex] == 0
 
     if verbose is not None:
         m.verbose = verbose
@@ -212,7 +210,7 @@ def kl_mip(
     status = m.optimize()
 
     if status == mip.OptimizationStatus.OPTIMAL:
-        return int(m.objective_value), [v for v in label if label[v].x >= 0.95], "optimal"
+        return int(m.objective_value), [v for v in red if red[v].x >= 0.95], "optimal"
 
     elif status == mip.OptimizationStatus.INFEASIBLE:
         return None, None, "infeasible"
