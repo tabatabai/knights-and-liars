@@ -25,7 +25,9 @@ def kl_gurobi(
     m = gp.Model()
 
     if formulation not in ["standard", "alternative", "indicator"]:
-        raise ValueError('The options for formulation are "standard", "alternative" or "indicator"')
+        raise ValueError(
+            'The options for formulation are "standard", "alternative" or "indicator"'
+        )
     if formulation == "standard":
         red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
         high = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
@@ -114,10 +116,10 @@ def kl_gurobi(
     m.optimize()
 
     if m.status == gp.GRB.OPTIMAL:
-        return int(m.getAttr("ObjVal")), [v for v in red if red[v].X >= 0.95], "optimal"
+        return round(m.getAttr("ObjVal")), [v for v in red if red[v].X >= 0.95], "optimal"
     elif m.status == gp.GRB.TIME_LIMIT:
         try:
-            return int(m.getAttr("ObjVal")), [v for v in red if red[v].X >= 0.95], "timelimit"
+            return round(m.getAttr("ObjVal")), [v for v in red if red[v].X >= 0.95], "timelimit"
         except Exception as e:
             print("Timelimit hit, no feasible solution was found.")
             print(e)
@@ -210,7 +212,7 @@ def kl_mip(
     status = m.optimize()
 
     if status == mip.OptimizationStatus.OPTIMAL:
-        return int(m.objective_value), [v for v in red if red[v].x >= 0.95], "optimal"
+        return round(m.objective_value), [v for v in red if red[v].x >= 0.95], "optimal"
 
     elif status == mip.OptimizationStatus.INFEASIBLE:
         return None, None, "infeasible"
