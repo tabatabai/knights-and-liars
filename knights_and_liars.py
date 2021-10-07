@@ -1,5 +1,6 @@
 import networkx as nx
 import time
+import itertools as it
 
 
 def kl_gurobi(
@@ -8,7 +9,7 @@ def kl_gurobi(
     blue_vertices=None,
     formulation="standard",
     print_program=False,
-    limit_hours=None,
+    drop_optional=False,
     OutputFlag=None,
     Threads=None,
     MIPFocus=None,
@@ -24,9 +25,16 @@ def kl_gurobi(
 
     m = gp.Model()
 
-    if formulation not in ["standard", "alternative", "indicator"]:
+    if formulation not in [
+        "standard",
+        "bosch",
+        "bosch_subsets",
+        "alternative",
+        "indicator",
+    ]:
         raise ValueError(
-            'The options for formulation are "standard", "alternative" or "indicator"'
+            'The options for formulation are "standard",'
+            '"bosch_subsets", "alternative", or "indicator"'
         )
     if formulation == "standard":
         red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
@@ -41,14 +49,61 @@ def kl_gurobi(
                 m.addConstr(red[x] == 0)
             else:
                 neighbors = list(G.neighbors(x))
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg // 2) * red[x])
+                if not drop_optional:
+                    m.addConstr(high[x] + low[x] <= 1 + red[x])
                 m.addConstr(high[x] + low[x] >= 1 - red[x])
-                m.addConstr(high[x] + low[x] <= 1 + red[x])
-                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x])
-                m.addConstr(sum([red[y] for y in neighbors]) >= (deg / 2) * red[x])
-                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg / 2 + 1) * low[x])
-                m.addConstr(sum([red[y] for y in neighbors]) >= (deg / 2 + 1) * high[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg // 2 + 1) * high[x])
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg // 2 + 1) * low[x])
 
-    elif formulation == "alternative":
+    if formulation == "bosch":
+        red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
+        high = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
+        low = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
+
+        m.setObjective(sum(red.values()), gp.GRB.MAXIMIZE)
+
+        for x in G.nodes():
+            deg = G.degree[x]
+            if deg % 2 == 1:
+                m.addConstr(red[x] == 0)
+            else:
+                neighbors = list(G.neighbors(x))
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg // 2) * red[x])
+                if not drop_optional:
+                    m.addConstr(high[x] + low[x] >= 1 + red[x])
+                m.addConstr(high[x] + low[x] <= 1 + red[x])
+
+                m.addConstr(
+                    sum([red[y] for y in neighbors]) >= (deg // 2 + 1) - (deg // 2 + 1) * high[x]
+                )
+                m.addConstr(
+                    sum([red[y] for y in neighbors]) <= (deg // 2 - 1) + (deg // 2 + 1) * low[x]
+                )
+
+    if formulation == "bosch_subsets":
+        red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
+
+        m.setObjective(sum(red.values()), gp.GRB.MAXIMIZE)
+
+        for x in G.nodes():
+            deg = G.degree[x]
+            if deg % 2 == 1:
+                m.addConstr(red[x] == 0)
+            else:
+                neighbors = list(G.neighbors(x))
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg // 2) * red[x])
+                for S in it.combinations(neighbors, deg // 2):
+                    T = [neighbor for neighbor in neighbors if neighbor not in S]
+                    m.addConstr(
+                        -red[x] + sum([red[s] for s in S]) - sum([red[t] for t in T])
+                        <= deg // 2 - 1
+                    )
+
+    if formulation == "alternative":
         red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
         aux = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
 
@@ -60,20 +115,18 @@ def kl_gurobi(
                 m.addConstr(red[x] == 0)
             else:
                 neighbors = list(G.neighbors(x))
-                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x])
-                m.addConstr(sum([red[y] for y in neighbors]) >= (deg / 2) * red[x])
-                # if red[x] == 0 and aux[x] == 0, the strict minority of x's neighbors is red
+                m.addConstr(sum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x])
+                m.addConstr(sum([red[y] for y in neighbors]) >= (deg // 2) * red[x])
                 m.addConstr(
                     sum([red[y] for y in neighbors])
-                    <= (deg / 2 - 1) + aux[x] * (deg / 2 + 1) + red[x] * (deg / 2 + 1)
+                    <= (deg // 2 - 1) + aux[x] * (deg // 2 + 1) + red[x] * (deg // 2 + 1)
                 )
-                # if red[x] == 0 and aux[x] == 1, the strict majority of x's neighbors is red
                 m.addConstr(
                     sum([red[y] for y in neighbors])
-                    >= (deg / 2 + 1) * aux[x] - (deg / 2 + 1) * red[x]
+                    >= (deg // 2 + 1) * aux[x] - (deg // 2 + 1) * red[x]
                 )
 
-    elif formulation == "indicator":
+    if formulation == "indicator":
         red = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes()}
         high = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
         low = {x: m.addVar(vtype=gp.GRB.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
@@ -87,9 +140,9 @@ def kl_gurobi(
             else:
                 neighbors = list(G.neighbors(x))
                 m.addConstr((red[x] == 0) >> (high[x] + low[x] == 1))
-                m.addConstr((red[x] == 1) >> (sum([red[y] for y in neighbors]) == (deg / 2)))
-                m.addConstr((high[x] == 1) >> (sum([red[y] for y in neighbors]) <= deg / 2 - 1))
-                m.addConstr((low[x] == 1) >> (sum([red[y] for y in neighbors]) >= deg / 2 + 1))
+                m.addConstr((red[x] == 1) >> (sum([red[y] for y in neighbors]) == (deg // 2)))
+                m.addConstr((high[x] == 1) >> (sum([red[y] for y in neighbors]) <= deg // 2 - 1))
+                m.addConstr((low[x] == 1) >> (sum([red[y] for y in neighbors]) >= deg // 2 + 1))
 
     if red_vertices is not None:
         for vertex in red_vertices:
@@ -141,11 +194,21 @@ def kl_mip(
 
     import mip
 
-    m = mip.Model(sense=mip.MAXIMIZE, solver_name=mip.CBC)
-
     if print_program:
         with open(__file__) as f:
             print(f.read())
+
+    m = mip.Model(sense=mip.MAXIMIZE, solver_name=mip.CBC)
+
+    if formulation not in [
+        "standard",
+        "bosch",
+        "bosch_subsets",
+        "alternative",
+    ]:
+        raise ValueError(
+            'The options for formulation are "standard",' '"bosch_subsets", or "alternative"'
+        )
 
     if formulation == "standard":
         red = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
@@ -160,12 +223,32 @@ def kl_mip(
                 m += red[x] == 0
             else:
                 neighbors = list(G.neighbors(x))
-                m += high[x] + low[x] >= 1 - red[x]
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg // 2) * red[x]
                 m += high[x] + low[x] <= 1 + red[x]
-                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x]
-                m += mip.xsum([red[y] for y in neighbors]) >= (deg / 2) * red[x]
-                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg / 2 + 1) * low[x]
-                m += mip.xsum([red[y] for y in neighbors]) >= (deg / 2 + 1) * high[x]
+                m += high[x] + low[x] >= 1 - red[x]
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg // 2 + 1) * low[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg // 2 + 1) * high[x]
+
+    elif formulation == "bosch":
+        red = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
+        high = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
+        low = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes() if G.degree(x) % 2 == 0}
+
+        m.objective = mip.xsum(red.values())
+
+        for x in G.nodes():
+            deg = G.degree[x]
+            if deg % 2 == 1:
+                m += red[x] == 0
+            else:
+                neighbors = list(G.neighbors(x))
+                m += sum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x]
+                m += sum([red[y] for y in neighbors]) >= (deg // 2) * red[x]
+                m += high[x] + low[x] >= 1 + red[x]
+                m += high[x] + low[x] <= 1 + red[x]
+                m += sum([red[y] for y in neighbors]) >= (deg // 2 + 1) - (deg // 2 + 1) * high[x]
+                m += sum([red[y] for y in neighbors]) <= (deg // 2 - 1) + (deg // 2 + 1) * low[x]
 
     elif formulation == "alternative":
         red = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
@@ -179,17 +262,35 @@ def kl_mip(
                 m += red[x] == 0
             else:
                 neighbors = list(G.neighbors(x))
-                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg / 2) * red[x]
-                m += mip.xsum([red[y] for y in neighbors]) >= (deg / 2) * red[x]
-                # if red[x] == 0 and aux[x] == 0, the strict minority of x's neighbors is red
-                m += mip.xsum([red[y] for y in neighbors]) <= (deg / 2 - 1) + aux[x] * (
-                    deg / 2 + 1
-                ) + red[x] * (deg / 2 + 1)
-                # if red[x] == 0 and aux[x] == 1, the strict majority of x's neighbors is red
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg // 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) <= (deg // 2 - 1) + aux[x] * (
+                    deg // 2 + 1
+                ) + red[x] * (deg // 2 + 1)
                 m += (
                     mip.xsum([red[y] for y in neighbors])
-                    >= (deg / 2 + 1) * aux[x] - (deg / 2 + 1) * red[x]
+                    >= (deg // 2 + 1) * aux[x] - (deg // 2 + 1) * red[x]
                 )
+
+    if formulation == "bosch_subsets":
+        red = {x: m.add_var(var_type=mip.BINARY) for x in G.nodes()}
+
+        m.objective = mip.xsum(red.values())
+
+        for x in G.nodes():
+            deg = G.degree[x]
+            if deg % 2 == 1:
+                m += red[x] == 0
+            else:
+                neighbors = list(G.neighbors(x))
+                m += mip.xsum([red[y] for y in neighbors]) <= deg - (deg // 2) * red[x]
+                m += mip.xsum([red[y] for y in neighbors]) >= (deg // 2) * red[x]
+                for S in it.combinations(neighbors, deg // 2):
+                    T = [neighbor for neighbor in neighbors if neighbor not in S]
+                    m += (
+                        -red[x] + sum([red[s] for s in S]) - sum([red[t] for t in T])
+                        <= deg // 2 - 1
+                    )
 
     if red_vertices is not None:
         for vertex in red_vertices:
@@ -219,30 +320,9 @@ def kl_mip(
 
 
 if __name__ == "__main__":
-    # G = nx.hypercube_graph(12)
-    # val, rv, status = kl_gurobi(
-    #     G,
-    #     red_vertices=[list(G.nodes())[0]],
-    #     formulation="standard",
-    #     OutputFlag=1,
-    #     Threads=2,
-    #     TimeLimit=0.0000001,
-    # )
-    # print(val, rv, status)
-
-    G = nx.grid_graph(dim=[9, 9])
-
-    val, rv, status = kl_mip(G, formulation="alternative", verbose=True, threads=1)
-    print(val, rv, status)
-
-    # start = time.time()
-    # val, _, _ = kl_gurobi(G, formulation="alternative", OutputFlag=1, Threads=2)
-    # print("alternative", val, time.time() - start)
-
-    # start = time.time()
-    # val, _, _ = kl_gurobi(G, formulation="standard", OutputFlag=1, Threads=2)
-    # print("standard", val, time.time() - start)
-
-    # start = time.time()
-    # val, _, _ = kl_gurobi(G, formulation="indicator", OutputFlag=1, Threads=2)
-    # print("indicator", val, time.time() - start)
+    G = nx.grid_graph(dim=[7, 7])
+    for formulation in ["alternative", "standard", "bosch", "bosch_subsets"]:
+        val, rv, status = kl_mip(G, formulation="alternative", verbose=False, threads=1)
+        print(val, rv, status)
+        val, rv, status = kl_gurobi(G, formulation="alternative", OutputFlag=False, Threads=1)
+        print(val, rv, status)
